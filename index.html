@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Merdiven & Kargo Fırlatma Oyunu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+            animation: float 6s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        #game-container {
+            position: relative;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        #game-canvas {
+            border: none;
+            background: linear-gradient(to bottom, #87CEEB 0%, #E0F7FA 100%);
+            display: block;
+            border-radius: 15px;
+        }
+        
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            z-index: 10;
+            border-radius: 15px;
+        }
+
+        #results-screen {
+            display: none;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        p {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 80%;
+            line-height: 1.6;
+        }
+        
+        button {
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 18px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+            background: linear-gradient(45deg, #45a049, #4CAF50);
+        }
+
+        .game-controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 5;
+            border: 2px solid #FFD700;
+        }
+
+        .control-instruction {
+            margin: 5px 0;
+            font-weight: bold;
+        }
+
+        /* Güç paneli - sağ üst */
+        .power-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 180px;
+            height: 200px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid #FFD700;
+            border-radius: 15px;
+            padding: 15px;
+            color: white;
+            z-index: 15;
+            font-family: Arial, sans-serif;
+        }
+
+        .power-title {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #FFD700;
+        }
+
+        .power-bar-container {
+            width: 50px;
+            height: 120px;
+            background: rgba(50, 50, 50, 0.8);
+            margin: 0 auto 15px;
+            position: relative;
+            border: 2px solid #666;
+            border-radius: 5px;
+        }
+
+        .power-bar {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: #4CAF50;
+            transition: height 0.1s ease;
+            border-radius: 0 0 3px 3px;
+        }
+
+        .power-value {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .power-status {
+            text-align: center;
+            font-size: 14px;
+            margin-top: 8px;
+            color: #FFD700;
+            font-weight: bold;
+        }
+
+        /* Açı göstergesi - orta üst */
+        .angle-display {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid #FF4444;
+            border-radius: 15px;
+            padding: 15px;
+            color: white;
+            z-index: 15;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        .angle-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #FF4444;
+            margin-bottom: 8px;
+        }
+
+        .angle-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .instructions-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid #FFD700;
+            border-radius: 15px;
+            padding: 25px;
+            color: white;
+            z-index: 20;
+            text-align: center;
+            min-width: 450px;
+        }
+
+        table {
+            margin-top: 20px;
+            border-collapse: collapse;
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
+        }
+
+        th {
+            background: rgba(255,255,255,0.2);
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1100px) {
+            #game-canvas {
+                width: 90vw;
+                height: auto;
+            }
+            
+            .power-panel {
+                width: 140px;
+                right: 10px;
+            }
+            
+            .angle-display {
+                width: 160px;
+            }
+            
+            .power-bar-container {
+                width: 40px;
+                height: 100px;
+            }
+            
+            .game-controls {
+                left: 10px;
+                top: 10px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas" width="1000" height="700"></canvas>
+        
+        <div class="game-controls">
+            <div class="control-instruction">🎯 <strong>KONTROLLER:</strong></div>
+            <div class="control-instruction">⬅️ ➡️ Açı ayarlama</div>
+            <div class="control-instruction">SPACE Güç + Fırlatma</div>
+            <div class="control-instruction">🖱️ Merdiven kontrolü</div>
+        </div>
+        
+        <!-- Basit başlangıç ekranı -->
+        <div id="start-screen" class="overlay-screen">
+            <h1>🎯 Merdiven & Kargo Fırlatma</h1>
+            <button id="start-button">🚀 Oyuna Başla</button>
+        </div>
+        
+        <div id="results-screen" class="overlay-screen">
+            <h1>📊 Oyun Sonuçları</h1>
+            <div id="results-content"></div>
+            <button id="play-again-button">🔄 Tekrar Oyna</button>
+        </div>
+
+        <!-- Güç paneli - sağ üst -->
+        <div id="power-panel" class="power-panel" style="display: none;">
+            <div class="power-title">⚡ GÜÇ KONTROLÜ</div>
+            <div class="power-bar-container">
+                <div id="power-bar" class="power-bar" style="height: 10%;"></div>
+            </div>
+            <div id="power-value" class="power-value">10%</div>
+            <div id="power-status" class="power-status"></div>
+        </div>
+
+        <!-- Açı göstergesi - orta üst -->
+        <div id="angle-display" class="angle-display" style="display: none;">
+            <div class="angle-title">🎯 AÇI KONTROLÜ</div>
+            <div id="angle-value" class="angle-value">45°</div>
+        </div>
+
+        <div id="instructions-panel" class="instructions-panel" style="display: none;">
+            <!-- Bilgilendirme paneli kaldırıldı -->
+        </div>
+    </div>
+
+    <script>
+        // Ses efektleri için AudioContext ve müzik değişkenleri
+        let audioContext;
+        let chargingOscillator = null;
+        let whooshSound = null;
+        let backgroundMusic = null;
+        let isMusicPlaying = false;
+
+        // Arka plan müziği oluştur
+        function createBackgroundMusic() {
+            const bpm = 120; // Dakikadaki vuruş sayısı
+            const noteSustain = 0.3; // Notaların uzunluğu
+            const noteGap = 0.1; // Notalar arası boşluk
+            
+            // Melodi notaları (pentatonik skala)
+            const notes = [
+                392.00, // G4
+                440.00, // A4
+                493.88, // B4
+                587.33, // D5
+                659.25  // E5
+            ];
+
+            const sequence = [];
+            const measureLength = 4; // 4/4'lük ölçü
+            const measures = 4; // Toplam ölçü sayısı
+            
+            // Rastgele melodi oluştur
+            for (let m = 0; m < measures; m++) {
+                for (let b = 0; b < measureLength; b++) {
+                    sequence.push(notes[Math.floor(Math.random() * notes.length)]);
+                }
+            }
+
+            const duration = (60 / bpm) * measureLength * measures;
+            const sampleRate = audioContext.sampleRate;
+            const totalSamples = Math.floor(sampleRate * duration);
+            
+            const buffer = audioContext.createBuffer(2, totalSamples, sampleRate);
+            
+            for (let channel = 0; channel < 2; channel++) {
+                const channelData = buffer.getChannelData(channel);
+                let currentTime = 0;
+                
+                sequence.forEach((frequency, index) => {
+                    const noteTime = (60 / bpm);
+                    const startSample = Math.floor(currentTime * sampleRate);
+                    const endSample = Math.floor((currentTime + noteSustain) * sampleRate);
+                    
+                    for (let i = startSample; i < endSample; i++) {
+                        const t = (i - startSample) / sampleRate;
+                        // Sinüs dalgası + yumuşak zarf
+                        channelData[i] = Math.sin(2 * Math.PI * frequency * t) * 
+                                       Math.exp(-4 * t / noteSustain) * 0.3;
+                    }
+                    
+                    currentTime += noteTime;
+                });
+            }
+
+            return buffer;
+        }
+
+        function playBackgroundMusic() {
+            if (isMusicPlaying) return;
+            
+            const source = audioContext.createBufferSource();
+            source.buffer = backgroundMusic;
+            
+            const gainNode = audioContext.createGain();
+            gainNode.gain.value = 0.2; // Düşük ses seviyesi
+            
+            source.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            source.loop = true; // Sürekli tekrar et
+            source.start();
+            isMusicPlaying = true;
+            
+            // Kaynak durduğunda flag'i sıfırla
+            source.onended = () => {
+                isMusicPlaying = false;
+            };
+        }
+
+        // Ses efektlerini oluştur
+        function createWhooshSound() {
+            const duration = 1;
+            const audioBuffer = audioContext.createBuffer(1, audioContext.sampleRate * duration, audioContext.sampleRate);
+            const channelData = audioBuffer.getChannelData(0);
+            
+            for (let i = 0; i < audioBuffer.length; i++) {
+                const t = i / audioContext.sampleRate;
+                const frequency = 1000 - (t * 800);
+                channelData[i] = Math.sin(2 * Math.PI * frequency * t) * Math.exp(-4 * t);
+            }
+            
+            return audioBuffer;
+        }
+
+        function playWhooshSound() {
+            const source = audioContext.createBufferSource();
+            source.buffer = whooshSound;
+            
+            const gainNode = audioContext.createGain();
+            gainNode.gain.value = 0.3; // Ses seviyesi
+            
+            source.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            source.start();
+        }
+
+        function startChargingSound() {
+            if (chargingOscillator) return;
+            
+            chargingOscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            chargingOscillator.type = 'sine';
+            chargingOscillator.frequency.setValueAtTime(220, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            
+            chargingOscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            chargingOscillator.start();
+            
+            // Frekansı ve sesi zamanla artır
+            chargingOscillator.frequency.exponentialRampToValueAtTime(
+                440, audioContext.currentTime + 2
+            );
+            gainNode.gain.linearRampToValueAtTime(
+                0.3, audioContext.currentTime + 2
+            );
+        }
+
+        function stopChargingSound() {
+            if (chargingOscillator) {
+                chargingOscillator.stop();
+                chargingOscillator = null;
+            }
+        }
+
+        // ========== CANVAS GÖRSEL OLUŞTURMA FONKSİYONLARI ==========
+        
+        function createBuildingImage() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 180;
+            canvas.height = 520;
+            
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+            gradient.addColorStop(0, '#CCCCCC');
+            gradient.addColorStop(0.5, '#EEEEEE');
+            gradient.addColorStop(1, '#DDDDDD');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = '#AAAAAA';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#4FC3F7';
+            const windowWidth = 12, windowHeight = 18, windowSpacingH = 22, windowSpacingV = 28;
+            
+            for (let row = 0; row < Math.floor(canvas.height / windowSpacingV); row++) {
+                for (let col = 0; col < Math.floor(canvas.width / windowSpacingH) - 1; col++) {
+                    const x = 12 + (col * windowSpacingH);
+                    const y = 12 + (row * windowSpacingV);
+                    
+                    ctx.fillStyle = '#2196F3';
+                    ctx.fillRect(x - 1, y - 1, windowWidth + 2, windowHeight + 2);
+                    
+                    ctx.fillStyle = '#64B5F6';
+                    ctx.fillRect(x, y, windowWidth, windowHeight);
+                    
+                    ctx.strokeStyle = '#1976D2';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(x + windowWidth/2, y);
+                    ctx.lineTo(x + windowWidth/2, y + windowHeight);
+                    ctx.moveTo(x, y + windowHeight/2);
+                    ctx.lineTo(x + windowWidth, y + windowHeight/2);
+                    ctx.stroke();
+                }
+            }
+            
+            ctx.fillStyle = '#BDBDBD';
+            for (let i = 0; i < canvas.height; i += 80) {
+                ctx.fillRect(0, i, canvas.width, 4);
+            }
+            
+            return canvas.toDataURL('image/png');
+        }
+
+        function createSkyImage() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 1000;
+            canvas.height = 700;
+            
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(0.7, '#E0F7FA');
+            gradient.addColorStop(1, '#F0F8FF');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            
+            function drawCloud(x, y, size) {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.scale(size / 100, size / 100);
+                
+                ctx.beginPath();
+                ctx.arc(0, 0, 25, 0, Math.PI * 2);
+                ctx.arc(25, 0, 35, 0, Math.PI * 2);
+                ctx.arc(50, 0, 25, 0, Math.PI * 2);
+                ctx.arc(75, 0, 20, 0, Math.PI * 2);
+                ctx.arc(15, -25, 20, 0, Math.PI * 2);
+                ctx.arc(40, -30, 30, 0, Math.PI * 2);
+                ctx.arc(60, -25, 20, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+            
+            drawCloud(150, 120, 60);
+            drawCloud(450, 100, 75);
+            drawCloud(750, 140, 65);
+            drawCloud(250, 200, 55);
+            drawCloud(600, 230, 70);
+            
+            return canvas.toDataURL('image/jpeg');
+        }
+
+        function createCrateImage() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 30;
+            canvas.height = 30;
+            
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, '#DDD');
+            gradient.addColorStop(0.5, '#D7CCC8');
+            gradient.addColorStop(1, '#BCAAA4');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(3, 3, canvas.width - 6, canvas.height - 6);
+            
+            ctx.fillStyle = '#A1887F';
+            ctx.fillRect(3, 3, canvas.width - 6, 2);
+            ctx.fillRect(3, canvas.height - 5, canvas.width - 6, 2);
+            ctx.fillRect(3, 3, 2, canvas.height - 6);
+            ctx.fillRect(canvas.width - 5, 3, 2, canvas.height - 6);
+            
+            ctx.fillStyle = '#8D6E63';
+            ctx.fillRect(3, 14, canvas.width - 6, 3);
+            ctx.fillRect(14, 3, 3, canvas.height - 6);
+            
+            ctx.fillStyle = '#5D4037';
+            ctx.fillRect(8, 8, 6, 2);
+            ctx.fillRect(8, 12, 6, 2);
+            ctx.fillRect(16, 8, 6, 2);
+            ctx.fillRect(16, 12, 6, 2);
+            
+            return canvas.toDataURL('image/png');
+        }
+
+        // ========== OYUN KODU ==========
+        
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Görseller
+        let buildingImageData, skyImageData, crateImageData;
+
+        // Oyun değişkenleri
+        let gameRunning = false;
+        let targetFloors = [];
+        let deliveryPoints = [];
+        let currentDelivery = 0;
+        let ladderLength = 0;
+        let ladderExtending = false;
+        let ladderFixed = false;
+        let ladderAngle = 0;
+        let buildingHeight = 500;
+        let floorHeight = 13;
+        let animationId;
+        let maxLadderLength = buildingHeight;
+
+        // Animasyon
+        let animationState = 'idle';
+        let targetAngle = 0;
+        let rotationSpeed = 2;
+
+        // Kargo fırlatma
+        let throwingGame = false;
+        let packageX = 0, packageY = 0;
+        let packageVelocityX = 0, packageVelocityY = 0;
+        let packageAngle = 45;
+        let packagePower = 10;
+        let maxPower = 200;
+        let isCharging = false;
+        let chargeStartTime = 0;
+        let gravity = 0.15;
+        let packageThrown = false;
+        let packageLanded = false;
+        let packageFloor = 0;
+        let throwingDebounce = false;
+        let packageOnLadder = false;
+
+        // Efektler
+        let particles = [];
+        let hitEffects = [];
+        let keys = {};
+
+        // Oyun nesneleri
+        const building = {
+            x: canvas.width - 180,
+            width: 160,
+            draw: function() {
+                // Gökyüzü
+                if (skyImageData) {
+                    const img = new Image();
+                    img.src = skyImageData;
+                    if (img.complete) {
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    }
+                } else {
+                    let gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                    gradient.addColorStop(0, "#87CEEB");
+                    gradient.addColorStop(1, "#E0F7FA");
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+                
+                // Bina
+                if (buildingImageData) {
+                    const img = new Image();
+                    img.src = buildingImageData;
+                    if (img.complete) {
+                        ctx.drawImage(img, this.x, canvas.height - buildingHeight - 40, this.width, buildingHeight + 40);
+                    }
+                } else {
+                    ctx.fillStyle = '#E0E0E0';
+                    ctx.fillRect(this.x, canvas.height - buildingHeight, this.width, buildingHeight);
+                    
+                    ctx.fillStyle = '#4FC3F7';
+                    for (let row = 0; row < Math.floor(buildingHeight / 25); row++) {
+                        for (let col = 0; col < Math.floor(this.width / 20) - 1; col++) {
+                            ctx.fillRect(this.x + 12 + (col * 20), canvas.height - buildingHeight + 12 + (row * 25), 12, 15);
+                        }
+                    }
+                }
+                
+                // Hedef kat vurgulama
+                if (currentDelivery < 3) {
+                    const y = canvas.height - targetFloors[currentDelivery] * floorHeight;
+                    ctx.fillStyle = 'rgba(255, 215, 0, 0.5)';
+                    ctx.fillRect(this.x, y - 8, this.width, 16);
+                }
+                
+                // Kat numaraları
+                for (let i = 0; i < buildingHeight / floorHeight; i++) {
+                    if (i % 5 === 0) {
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.font = 'bold 12px Arial';
+                        ctx.strokeStyle = 'black';
+                        ctx.lineWidth = 2;
+                        ctx.strokeText(i.toString(), this.x - 20, canvas.height - i * floorHeight - 2);
+                        ctx.fillText(i.toString(), this.x - 20, canvas.height - i * floorHeight - 2);
+                    }
+                }
+                
+                // Hedef katlar
+                for (let i = 0; i < targetFloors.length; i++) {
+                    const y = canvas.height - targetFloors[i] * floorHeight;
+                    if (i === currentDelivery || currentDelivery >= 3) {
+                        ctx.fillStyle = '#FFD700';
+                        ctx.fillRect(this.x - 6, y - 8, 6, 16);
+                        
+                        // Parlayan efekt
+                        ctx.fillStyle = '#FFF700';
+                        ctx.fillRect(this.x - 4, y - 6, 2, 12);
+                    }
+                }
+                
+                // Teslimat noktaları (oyun sonunda)
+                if (currentDelivery >= 3) {
+                    ctx.fillStyle = '#4CAF50';
+                    for (let i = 0; i < deliveryPoints.length; i++) {
+                        const y = canvas.height - deliveryPoints[i] * floorHeight;
+                        ctx.beginPath();
+                        ctx.arc(this.x - 12, y, 6, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        ctx.fillStyle = '#81C784';
+                        ctx.beginPath();
+                        ctx.arc(this.x - 12, y, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+        };
+
+        const ladder = {
+            width: 12,
+            baseX: 15,
+            baseY: canvas.height,
+            draw: function() {
+                ctx.save();
+                
+                const startX = this.baseX;
+                const startY = this.baseY;
+                
+                if (animationState === 'idle' || animationState === 'extending') {
+                    // Yatay merdiven
+                    ctx.strokeStyle = '#8B4513';
+                    ctx.lineWidth = 4;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY - 15);
+                    ctx.lineTo(startX + ladderLength, startY - 15);
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY - 15 - this.width);
+                    ctx.lineTo(startX + ladderLength, startY - 15 - this.width);
+                    ctx.stroke();
+                    
+                    const steps = Math.floor(ladderLength / 18);
+                    for (let i = 0; i < steps; i++) {
+                        ctx.beginPath();
+                        const x = startX + (i * 18) + 9;
+                        ctx.moveTo(x, startY - 15);
+                        ctx.lineTo(x, startY - 15 - this.width);
+                        ctx.stroke();
+                    }
+                    
+                } else if (animationState === 'rotating' || animationState === 'fixed' || animationState === 'throwing') {
+                    // Döndürülmüş merdiven
+                    ctx.translate(startX, startY - 15);
+                    ctx.rotate(-ladderAngle * Math.PI / 180);
+                    
+                    ctx.strokeStyle = '#8B4513';
+                    ctx.lineWidth = 4;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(ladderLength, 0);
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(0, -this.width);
+                    ctx.lineTo(ladderLength, -this.width);
+                    ctx.stroke();
+                    
+                    const steps = Math.floor(ladderLength / 18);
+                    for (let i = 0; i < steps; i++) {
+                        ctx.beginPath();
+                        const x = (i * 18) + 9;
+                        ctx.moveTo(x, 0);
+                        ctx.lineTo(x, -this.width);
+                        ctx.stroke();
+                    }
+                    
+                    // Paket (fırlatma öncesi)
+                    if (ladderFixed && currentDelivery < 3 && animationState !== 'throwing') {
+                        if (crateImageData) {
+                            const img = new Image();
+                            img.src = crateImageData;
+                            if (img.complete) {
+                                ctx.drawImage(img, ladderLength - 12, -18, 20, 20);
+                            }
+                        } else {
+                            ctx.fillStyle = '#FFA500';
+                            ctx.fillRect(ladderLength - 4, -8, 8, 8);
+                        }
+                    }
+                }
+                
+                ctx.restore();
+            },
+            
+            calculateBuildingContact: function() {
+                const endX = this.baseX + Math.cos(-ladderAngle * Math.PI / 180) * ladderLength;
+                const endY = this.baseY - 15 - Math.sin(-ladderAngle * Math.PI / 180) * ladderLength;
+                const contactHeight = canvas.height - endY;
+                const contactFloor = Math.floor(contactHeight / floorHeight);
+                
+                return { x: endX, y: endY, floor: contactFloor };
+            }
+        };
+
+        // Oyun fonksiyonları
+        function startGame() {
+            if (audioContext && !isMusicPlaying) {
+                playBackgroundMusic();
+            }
+            
+            gameRunning = true;
+            targetFloors = [];
+            deliveryPoints = [];
+            currentDelivery = 0;
+            ladderLength = 0;
+            ladderAngle = 0;
+            animationState = 'idle';
+            ladderExtending = false;
+            ladderFixed = false;
+            throwingGame = false;
+            packageThrown = false;
+            packageLanded = false;
+            
+            for (let i = 0; i < 3; i++) {
+                targetFloors.push(Math.floor(Math.random() * 30) + 8);
+            }
+            
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('results-screen').style.display = 'none';
+            document.getElementById('power-panel').style.display = 'none';
+            document.getElementById('angle-display').style.display = 'none';
+            
+            console.log('🎮 Oyun başladı! Hedef katlar:', targetFloors);
+            
+            startLadderExtension();
+        }
+
+        function startLadderExtension() {
+            ladderExtending = true;
+            ladderFixed = false;
+            ladderLength = 0;
+            ladderAngle = 0;
+            animationState = 'extending';
+            packageAngle = 45;
+            packagePower = 10;
+            throwingDebounce = false;
+            packageThrown = false;
+            packageLanded = false;
+            packageOnLadder = false;
+            particles = [];
+            hitEffects = [];
+            
+            gameLoop();
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Merdiven uzatma
+            if (animationState === 'extending' && ladderExtending) {
+                ladderLength += 2.2; // Daha yavaş uzatma (önceden 3.5'ti)
+                
+                if (ladderLength >= maxLadderLength) {
+                    ladderLength = maxLadderLength;
+                    ladderExtending = false;
+                    animationState = 'rotating';
+                    targetAngle = Math.min(45, Math.atan(ladderLength / 600) * 180 / Math.PI); // Uzun merdiven için ayarlama
+                    console.log(`📏 Merdiven uzatma tamamlandı: ${Math.round(ladderLength)} piksel`);
+                    console.log(`📐 Hedef döndürme açısı: ${Math.round(targetAngle)}°`);
+                }
+            }
+            
+            // Merdiven döndürme
+            if (animationState === 'rotating') {
+                if (ladderAngle < targetAngle) {
+                    ladderAngle += rotationSpeed;
+                    
+                    if (ladderAngle >= targetAngle) {
+                        ladderAngle = targetAngle;
+                        animationState = 'throwing';
+                        ladderFixed = true;
+                        
+                        // Merdiven ucu konumunu MANUEL hesapla (daha güvenilir)
+                        const ladderBaseX = 15;
+                        const ladderBaseY = canvas.height - 15;
+                        const angleRad = -ladderAngle * Math.PI / 180;
+                        
+                        packageX = ladderBaseX + Math.cos(angleRad) * ladderLength;
+                        packageY = ladderBaseY + Math.sin(angleRad) * ladderLength;
+                        
+                        packageThrown = false;
+                        packageLanded = false;
+                        throwingGame = true;
+                        packagePower = 10;
+                        isCharging = false;
+                        throwingDebounce = false;
+                        packageOnLadder = true;
+                        
+                        // Debug log'ları
+                        console.log('🎯 Fırlatma modu başladı!');
+                        console.log(`📍 Hesaplanan paket konumu: X=${Math.round(packageX)}, Y=${Math.round(packageY)}`);
+                        console.log(`📐 Merdiven açısı: ${Math.round(ladderAngle)}°`);
+                        console.log(`📏 Merdiven uzunluğu: ${Math.round(ladderLength)}`);
+                        console.log(`📐 Rad açı: ${angleRad.toFixed(3)}`);
+                    }
+                }
+            }
+            
+            // Kargo fırlatma
+            if (animationState === 'throwing') {
+                if (!packageThrown) {
+                    updatePackagePositionOnLadder();
+                    
+                    // Kontroller
+                    if (keys['ArrowLeft'] && packageAngle < 85) {
+                        packageAngle += 3;
+                        updatePackagePositionOnLadder();
+                        console.log(`🔄 Açı artırıldı: ${Math.round(packageAngle)}°`);
+                    }
+                    if (keys['ArrowRight'] && packageAngle > 5) {
+                        packageAngle -= 3;
+                        updatePackagePositionOnLadder();
+                        console.log(`🔄 Açı azaltıldı: ${Math.round(packageAngle)}°`);
+                    }
+                    
+                    if (isCharging) {
+                        packagePower = Math.min(maxPower, 10 + (Date.now() - chargeStartTime) / 15);
+                        
+                        if (Math.random() > 0.6) {
+                            particles.push({
+                                x: packageX + (Math.random() - 0.5) * 8,
+                                y: packageY + (Math.random() - 0.5) * 8,
+                                size: Math.random() * 3 + 1,
+                                speedX: (Math.random() - 0.5) * 2,
+                                speedY: Math.random() * -2 - 1,
+                                color: `hsl(${30 + packagePower * 2}, 100%, 60%)`,
+                                life: 25
+                            });
+                        }
+                    }
+                } else if (!packageLanded) {
+                    // Paket hareketi
+                    packageX += packageVelocityX;
+                    packageY += packageVelocityY;
+                    packageVelocityY += gravity;
+                    
+                    // Uçuş parçacıkları - daha sık ve görsel
+                    if (Math.random() > 0.5) { // Daha sık parçacık (önceden 0.8'di)
+                        particles.push({
+                            x: packageX + (Math.random() - 0.5) * 6,
+                            y: packageY + (Math.random() - 0.5) * 6,
+                            size: Math.random() * 3 + 1,
+                            speedX: (Math.random() - 0.5) * 2,
+                            speedY: Math.random() * 2,
+                            color: `rgba(255, 200, 100, ${0.5 + Math.random() * 0.5})`,
+                            life: 20 + Math.random() * 10
+                        });
+                    }
+                    
+                    // Bina çarpışması
+                    if (packageX >= building.x && packageX <= building.x + building.width && 
+                        packageY <= canvas.height && packageY >= canvas.height - buildingHeight) {
+                        packageLanded = true;
+                        
+                        const landingHeight = canvas.height - packageY;
+                        packageFloor = Math.floor(landingHeight / floorHeight);
+                        
+                        deliveryPoints.push(packageFloor);
+                        createHitEffect(packageX, packageY);
+                        
+                        const targetFloor = targetFloors[currentDelivery];
+                        const error = Math.abs(targetFloor - packageFloor);
+                        
+                        if (error === 0) {
+                            console.log("🎯 MÜKEMMEL ATIŞ!");
+                        } else if (error <= 2) {
+                            console.log(`✅ İyi atış! Hata: ${error}`);
+                        } else {
+                            console.log(`❌ Isabetsiz! Hata: ${error}`);
+                        }
+                        
+                        setTimeout(() => {
+                            currentDelivery++;
+                            if (currentDelivery >= 3) {
+                                showResults();
+                            } else {
+                                startLadderExtension();
+                            }
+                        }, 1500);
+                    }
+                    
+                    // Yere düşme
+                    if (packageY >= canvas.height) {
+                        packageY = canvas.height;
+                        packageLanded = true;
+                        packageFloor = 0;
+                        
+                        createHitEffect(packageX, packageY);
+                        deliveryPoints.push(packageFloor);
+                        
+                        setTimeout(() => {
+                            currentDelivery++;
+                            if (currentDelivery >= 3) {
+                                showResults();
+                            } else {
+                                startLadderExtension();
+                            }
+                        }, 1500);
+                    }
+                    
+                    updateParticles();
+                }
+            }
+            
+            // Çizim
+            building.draw();
+            ladder.draw();
+            drawParticles();
+            drawHitEffects();
+            
+            if (animationState === 'throwing') {
+                if (packageThrown && !packageLanded) {
+                    // Uçan paket - daha büyük
+                    ctx.save();
+                    ctx.translate(packageX, packageY);
+                    const rotationAngle = (Date.now() / 200) % (Math.PI * 2);
+                    ctx.rotate(rotationAngle);
+                    
+                    if (crateImageData) {
+                        const img = new Image();
+                        img.src = crateImageData;
+                        if (img.complete) {
+                            ctx.drawImage(img, -15, -15, 30, 30); // Daha büyük (önceden 20x20'ydi)
+                        }
+                    } else {
+                        ctx.fillStyle = '#FFA500';
+                        ctx.fillRect(-8, -8, 16, 16); // Daha büyük (önceden 8x8'di)
+                    }
+                    
+                    // Paket etrafında parlak halka
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 20, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.6)';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    
+                    ctx.restore();
+                } else if (!packageThrown) {
+                    drawPackageOnLadder();
+                    drawAimingInterface();
+                    updatePowerIndicator();
+                    updateAngleDisplay();
+                    
+                    ctx.font = 'bold 24px Arial';
+                    ctx.fillStyle = '#FFD700';
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 3;
+                    ctx.strokeText(`🎯 Hedef Kat: ${targetFloors[currentDelivery]}`, 20, 45);
+                    ctx.fillText(`🎯 Hedef Kat: ${targetFloors[currentDelivery]}`, 20, 45);
+                }
+            }
+            
+            // Skor
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 18px Arial';
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.strokeText(`📦 Teslimat: ${currentDelivery + 1}/3`, 20, 25);
+            ctx.fillText(`📦 Teslimat: ${currentDelivery + 1}/3`, 20, 25);
+            
+            if (gameRunning) {
+                animationId = requestAnimationFrame(gameLoop);
+            }
+        }
+
+        // Parçacık sistemi
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].x += particles[i].speedX;
+                particles[i].y += particles[i].speedY;
+                particles[i].life--;
+                
+                if (particles[i].life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+            
+            for (let i = hitEffects.length - 1; i >= 0; i--) {
+                hitEffects[i].size += 2;
+                hitEffects[i].alpha -= 0.03;
+                
+                if (hitEffects[i].alpha <= 0) {
+                    hitEffects.splice(i, 1);
+                }
+            }
+        }
+
+        function drawParticles() {
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+            }
+        }
+
+        function drawHitEffects() {
+            for (let i = 0; i < hitEffects.length; i++) {
+                const effect = hitEffects[i];
+                ctx.beginPath();
+                ctx.arc(effect.x, effect.y, effect.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 165, 0, ${effect.alpha})`;
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(effect.x, effect.y, effect.size * 0.6, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${effect.alpha * 1.2})`;
+                ctx.fill();
+            }
+        }
+
+        function createHitEffect(x, y) {
+            hitEffects.push({ x: x, y: y, size: 5, alpha: 1 });
+            
+            for (let i = 0; i < 15; i++) {
+                particles.push({
+                    x: x, y: y,
+                    size: Math.random() * 3 + 2,
+                    speedX: (Math.random() - 0.5) * 5,
+                    speedY: (Math.random() - 0.5) * 5,
+                    color: `hsl(${Math.random() * 60}, 100%, 50%)`,
+                    life: 25 + Math.random() * 15
+                });
+            }
+        }
+
+        function handleClick() {
+            if (!gameRunning) return;
+            
+            if (animationState === 'extending') {
+                ladderExtending = false;
+                animationState = 'rotating';
+                targetAngle = Math.min(45, Math.atan(ladderLength / 600) * 180 / Math.PI); // Uzun merdiven için ayarlama
+                console.log('🔄 Merdiven manuel olarak durduruldu');
+                console.log(`📏 Merdiven uzunluğu: ${Math.round(ladderLength)} piksel`);
+                console.log(`📐 Hedef döndürme açısı: ${Math.round(targetAngle)}°`);
+            }
+        }
+
+        function calculateError() {
+            let totalError = 0;
+            let errors = [];
+            
+            for (let i = 0; i < targetFloors.length; i++) {
+                const error = Math.abs(targetFloors[i] - deliveryPoints[i]);
+                errors.push(error);
+                totalError += error;
+            }
+            
+            const avgError = totalError / 3;
+            const successRate = Math.max(0, 100 - (avgError * 20));
+            
+            return { errors: errors, avgError: avgError, successRate: Math.round(successRate) };
+        }
+
+        function showResults() {
+            gameRunning = false;
+            cancelAnimationFrame(animationId);
+            
+            // UI panellerini gizle
+            document.getElementById('power-panel').style.display = 'none';
+            document.getElementById('angle-display').style.display = 'none';
+            document.getElementById('instructions-panel').style.display = 'none';
+            
+            const results = calculateError();
+            
+            let successEmoji = "🥺";
+            if (results.successRate >= 90) successEmoji = "🏆";
+            else if (results.successRate >= 75) successEmoji = "🥇";
+            else if (results.successRate >= 60) successEmoji = "🥈";
+            else if (results.successRate >= 40) successEmoji = "🥉";
+            else if (results.successRate >= 20) successEmoji = "👍";
+
+            let resultsHTML = `
+                <div style="background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(40, 40, 40, 0.8)); padding: 25px; border-radius: 15px; border: 2px solid #FFD700;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="font-size: 48px; margin-bottom: 10px;">${successEmoji}</div>
+                        <p style="font-size: 28px; color: #FFD700; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">
+                            Başarı Oranı: <strong>%${results.successRate}</strong>
+                        </p>
+                        <p style="font-size: 18px; color: #FFF; margin-bottom: 20px;">
+                            Ortalama Hata: <strong>${results.avgError.toFixed(1)} kat</strong>
+                        </p>
+                    </div>
+                    <table style="margin: 0 auto;">
+                        <tr>
+                            <th>🎯 Teslimat</th>
+                            <th>📍 Hedef Kat</th>
+                            <th>📦 Ulaşılan Kat</th>
+                            <th>📊 Hata</th>
+                            <th>⭐ Sonuç</th>
+                        </tr>
+            `;
+            
+            for (let i = 0; i < targetFloors.length; i++) {
+                let resultIcon = "❌";
+                if (results.errors[i] === 0) resultIcon = "🎯";
+                else if (results.errors[i] <= 2) resultIcon = "✅";
+                else if (results.errors[i] <= 5) resultIcon = "⚠️";
+                
+                resultsHTML += `
+                    <tr style="background: ${results.errors[i] === 0 ? 'rgba(76, 175, 80, 0.3)' : results.errors[i] <= 2 ? 'rgba(255, 193, 7, 0.3)' : 'rgba(244, 67, 54, 0.3)'};">
+                        <td>Teslimat ${i + 1}</td>
+                        <td>${targetFloors[i]}</td>
+                        <td>${deliveryPoints[i]}</td>
+                        <td>${results.errors[i]} kat</td>
+                        <td>${resultIcon}</td>
+                    </tr>
+                `;
+            }
+            
+            resultsHTML += '</table></div>';
+            
+            document.getElementById('results-content').innerHTML = resultsHTML;
+            document.getElementById('results-screen').style.display = 'flex';
+        }
+
+        function updatePackagePositionOnLadder() {
+            if (packageOnLadder && !packageThrown) {
+                // Manuel hesaplama yöntemi
+                const ladderBaseX = 15;
+                const ladderBaseY = canvas.height - 15;
+                const angleRad = -ladderAngle * Math.PI / 180;
+                
+                packageX = ladderBaseX + Math.cos(angleRad) * ladderLength;
+                packageY = ladderBaseY + Math.sin(angleRad) * ladderLength;
+            }
+        }
+
+        function drawPackageOnLadder() {
+            if (crateImageData) {
+                const img = new Image();
+                img.src = crateImageData;
+                if (img.complete) {
+                    ctx.drawImage(img, packageX - 18, packageY - 18, 36, 36); // Daha büyük (önceden 30x30'du)
+                    
+                    // Parlak halka
+                    ctx.beginPath();
+                    ctx.arc(packageX, packageY, 25, 0, Math.PI * 2); // Daha büyük halka
+                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                }
+            } else {
+                ctx.fillStyle = '#FFA500';
+                ctx.fillRect(packageX - 12, packageY - 12, 24, 24); // Daha büyük (önceden 16x16'ydı)
+                ctx.strokeStyle = 'yellow';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(packageX - 14, packageY - 14, 28, 28);
+            }
+        }
+
+        function drawAimingInterface() {
+            // Ok kargo paketinin bulunduğu konumdan çizilecek (merdiven ucundan)
+            const aimOriginX = packageX; // Paketin bulunduğu konum
+            const aimOriginY = packageY; // Paketin bulunduğu konum
+            
+            // Koordinat kontrolü - sadece NaN kontrolü
+            if (isNaN(aimOriginX) || isNaN(aimOriginY) || typeof aimOriginX !== 'number' || typeof aimOriginY !== 'number') {
+                console.warn('⚠️ Paket koordinatları geçersiz!', {aimOriginX, aimOriginY, types: {x: typeof aimOriginX, y: typeof aimOriginY}});
+                return;
+            }
+            
+            console.log(`✅ Ok çiziliyor! Konum: X=${aimOriginX.toFixed(1)}, Y=${aimOriginY.toFixed(1)}`);
+            
+            ctx.save();
+            ctx.translate(aimOriginX, aimOriginY);
+            
+            const aimLineLength = 150; // Daha uzun ok
+            const aimX = Math.cos(packageAngle * Math.PI / 180) * aimLineLength;
+            const aimY = -Math.sin(packageAngle * Math.PI / 180) * aimLineLength;
+            
+            // Ok arka planı (çok kalın, beyaz)
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(aimX, aimY);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 1.0)';
+            ctx.lineWidth = 12;
+            ctx.stroke();
+            
+            // Ok gövdesi (kırmızı, kalın)
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(aimX, aimY);
+            ctx.strokeStyle = 'rgba(255, 0, 0, 1.0)';
+            ctx.lineWidth = 8;
+            ctx.stroke();
+            
+            // Ok ucu (büyük)
+            ctx.beginPath();
+            ctx.moveTo(aimX, aimY);
+            ctx.lineTo(aimX - 30 * Math.cos(packageAngle * Math.PI / 180 + Math.PI/6), 
+                       aimY + 30 * Math.sin(packageAngle * Math.PI / 180 + Math.PI/6));
+            ctx.lineTo(aimX - 30 * Math.cos(packageAngle * Math.PI / 180 - Math.PI/6), 
+                       aimY + 30 * Math.sin(packageAngle * Math.PI / 180 - Math.PI/6));
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(255, 0, 0, 1.0)';
+            ctx.fill();
+            
+            // Ok ucundaki parlak halka (çok büyük)
+            ctx.beginPath();
+            ctx.arc(aimX, aimY, 25, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(aimX, aimY, 20, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 1.0)';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            
+            // Orta nokta (paketin bulunduğu yer) - büyük
+            ctx.beginPath();
+            ctx.arc(0, 0, 12, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.9)';
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(0, 0, 8, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255, 0, 0, 1.0)';
+            ctx.fill();
+            
+            // Şarj efekti
+            if (isCharging) {
+                const pulseSize = Math.sin(Date.now() / 100) * 15 + 20;
+                
+                const powerPercentage = packagePower / maxPower;
+                let powerColor = powerPercentage < 0.3 ? '#4CAF50' : powerPercentage < 0.7 ? '#FFC107' : '#F44336';
+                
+                ctx.beginPath();
+                ctx.arc(0, 0, pulseSize, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 0, 0.4)';
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(0, 0, pulseSize * 0.7, 0, Math.PI * 2);
+                ctx.fillStyle = powerColor + '80'; // Transparanlık
+                ctx.fill();
+            }
+            
+            ctx.restore();
+        }
+
+        function updatePowerIndicator() {
+            const powerPanel = document.getElementById('power-panel');
+            const powerBar = document.getElementById('power-bar');
+            const powerValue = document.getElementById('power-value');
+            const powerStatus = document.getElementById('power-status');
+            
+            if (animationState === 'throwing' && !packageThrown) {
+                powerPanel.style.display = 'block';
+                
+                const powerPercentage = packagePower / maxPower;
+                let powerColor = powerPercentage < 0.3 ? '#4CAF50' : powerPercentage < 0.7 ? '#FFC107' : '#F44336';
+                
+                powerBar.style.height = (powerPercentage * 100) + '%';
+                powerBar.style.backgroundColor = powerColor;
+                powerValue.textContent = Math.round(packagePower) + '%';
+                
+                if (isCharging) {
+                    const flash = Math.sin(Date.now() / 150) > 0;
+                    powerStatus.textContent = '⚡ ŞARJ EDİLİYOR!';
+                    powerStatus.style.color = flash ? '#FFD700' : '#FF4444';
+                    powerPanel.style.borderColor = flash ? '#FFD700' : 'white';
+                } else {
+                    powerStatus.textContent = 'SPACE basılı tut';
+                    powerPanel.style.borderColor = '#FFD700';
+                    powerStatus.style.color = '#AAA';
+                }
+            } else {
+                powerPanel.style.display = 'none';
+            }
+        }
+
+        function updateAngleDisplay() {
+            const angleDisplay = document.getElementById('angle-display');
+            const angleValue = document.getElementById('angle-value');
+            
+            if (animationState === 'throwing' && !packageThrown) {
+                angleDisplay.style.display = 'block';
+                angleValue.textContent = Math.round(packageAngle) + '°';
+                
+                // Açı değişimi sırasında yanıp sönme efekti
+                if (keys['ArrowLeft'] || keys['ArrowRight']) {
+                    const flash = Math.sin(Date.now() / 100) > 0;
+                    angleDisplay.style.borderColor = flash ? '#FFD700' : '#FF4444';
+                } else {
+                    angleDisplay.style.borderColor = '#FF4444';
+                }
+            } else {
+                angleDisplay.style.display = 'none';
+            }
+        }
+
+        // Event Listeners - DÜZELTİLMİŞ VERSİYON
+        document.getElementById('start-button').addEventListener('click', function() {
+            // AudioContext'i kullanıcı etkileşimiyle başlat
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                whooshSound = createWhooshSound();
+                backgroundMusic = createBackgroundMusic();
+            }
+            startGame();
+        });
+
+        document.getElementById('play-again-button').addEventListener('click', startGame);
+        canvas.addEventListener('click', handleClick);
+
+        // Tuş kontrolleri - DÜZELTİLMİŞ VERSİYON
+        window.addEventListener('keydown', function(e) {
+            keys[e.code] = true;
+            
+            if (e.code === 'Space' && animationState === 'throwing' && !packageThrown && !throwingDebounce) {
+                e.preventDefault();
+                if (!isCharging) {
+                    isCharging = true;
+                    chargeStartTime = Date.now();
+                    startChargingSound();
+                    console.log('⚡ Güç şarj edilmeye başlandı');
+                }
+            }
+        });
+
+        window.addEventListener('keyup', function(e) {
+            const wasPressed = keys[e.code];
+            keys[e.code] = false;
+            
+            if (e.code === 'Space' && wasPressed && isCharging && !packageThrown && animationState === 'throwing' && !throwingDebounce) {
+                e.preventDefault();
+                stopChargingSound(); // Şarj sesini durdur
+                playWhooshSound(); // Fırlatma sesini çal
+                packageThrown = true;
+                packageOnLadder = false;
+                
+                const powerFactor = packagePower / 8;
+                packageVelocityX = Math.cos(packageAngle * Math.PI / 180) * powerFactor;
+                packageVelocityY = -Math.sin(packageAngle * Math.PI / 180) * powerFactor;
+                
+                isCharging = false;
+                throwingDebounce = true;
+                
+                // throwingDebounce'ı kısa süre sonra false yap
+                setTimeout(() => {
+                    throwingDebounce = false;
+                }, 100);
+                
+                console.log(`🚀 Kargo fırlatıldı! Açı: ${Math.round(packageAngle)}°, Güç: ${Math.round(packagePower)}%`);
+                console.log(`📍 Fırlatma konumu: X=${Math.round(packageX)}, Y=${Math.round(packageY)}`);
+                console.log(`💨 Başlangıç hızı: vX=${packageVelocityX.toFixed(2)}, vY=${packageVelocityY.toFixed(2)}`);
+                
+                for (let i = 0; i < 20; i++) {
+                    particles.push({
+                        x: packageX + (Math.random() - 0.5) * 12,
+                        y: packageY + (Math.random() - 0.5) * 12,
+                        size: Math.random() * 5 + 2,
+                        speedX: packageVelocityX * (Math.random() * 0.4 + 0.1),
+                        speedY: packageVelocityY * (Math.random() * 0.4 + 0.1),
+                        color: `hsl(${30 + Math.random() * 60}, 100%, ${50 + Math.random() * 30}%)`,
+                        life: 40 + Math.random() * 20
+                    });
+                }
+            }
+        });
+
+        // Sayfa kaydırmasını engelle
+        window.addEventListener('keydown', function(e) {
+            if(e.code === 'Space') {
+                e.preventDefault();
+            }
+        });
+
+        // Başlangıç
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('🎮 Oyun yükleniyor...');
+            
+            try {
+                buildingImageData = createBuildingImage();
+                skyImageData = createSkyImage();
+                crateImageData = createCrateImage();
+                
+                console.log("🎨 Görseller oluşturuldu!");
+            } catch (error) {
+                console.warn("⚠️ Görsel hatası, yedek çizimler kullanılacak:", error);
+            }
+
+            building.x = canvas.width - 180;
+            maxLadderLength = buildingHeight * 1.25; // Merdiveni 1.25 kat daha uzun yap
+            
+            console.log("🎮 Oyun hazır! Kontroller aktif.");
+            console.log(`📏 Maksimum merdiven uzunluğu: ${maxLadderLength} (önceden ${buildingHeight})`);
+            
+            // Başlangıç ekranını göster
+            document.getElementById('start-screen').style.display = 'flex';
+        });
+    </script>
+</body>
+</html> 
