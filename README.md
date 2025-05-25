@@ -44,7 +44,7 @@ Tüm sesler Web Audio API kullanılarak dosyasız şekilde üretildi.
 
 ## 🌐 Yayın
 
-Bu oyun şu adreste yayınlanmıştır:
+Bu oyun şu adreste yayınlanmıştır: (https://ervaaygunes.github.io/kargo_oyun_web/)
 
 
 
