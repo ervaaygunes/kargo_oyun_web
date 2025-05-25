@@ -73,6 +73,7 @@ Bu projede ChatGPT ve Cursor AI desteğinden yararlanılmıştır. Tüm kullanı
 ## 🎥 Oynanış Videosu
 
 YouTube oynanış videosu için:
+https://www.youtube.com/watch?v=hWTzUbyRfYA&ab_channel=ErvaAyg%C3%BCne%C5%9F
 
 
 
