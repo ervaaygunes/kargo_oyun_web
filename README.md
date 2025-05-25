@@ -22,11 +22,11 @@ Her fırlatmadan sonra hedef nokta ile gerçek çarpma noktası arasındaki mesa
 ## 🖼️ Oyun Görselleri
 Aşağıda oyun açılış ekranı, merdiven boyu seçildikten sonra gelen ekran ve sonuç/başarı ekranı görselleri yer almaktadır.
 
-<img width="1440" alt="Ekran Resmi 2025-05-24 22 18 24" src="https://github.com/user-attachments/assets/3f2b9594-aa53-4e7c-8b19-c34cc5d26f48" />
+<img width="1440" alt="girisekrani" src="https://github.com/user-attachments/assets/f3e548bf-1848-4078-96b5-d641912f6a92" />
 
-<img width="1440" alt="merdivenekrani" src="https://github.com/user-attachments/assets/86c630db-c8b0-457d-b380-50fca5d67b0c" />
+<img width="1440" alt="merdivenekrani" src="https://github.com/user-attachments/assets/12f0dcc9-27a7-4de7-8e80-1c0275c88819" />
 
-<img width="1440" alt="sonucekrani" src="https://github.com/user-attachments/assets/5a965a01-9b25-4c8b-b1bf-2fa2575569d0" />
+<img width="1440" alt="sonucekrani" src="https://github.com/user-attachments/assets/f18a0e55-73e6-4abb-9e5b-5a47d3f82e9e" />
 
 
 ---
@@ -44,7 +44,7 @@ Tüm sesler Web Audio API kullanılarak dosyasız şekilde üretildi.
 
 ## 🌐 Yayın
 
-Bu oyun şu adreste yayınlanmıştır: (https://ervaaygunes.github.io/kargo_oyun_web/)
+Bu oyun şu adreste yayınlanmıştır: https://ervaaygunes.github.io/kargo_oyun_web/
 
 
 
